@@ -1,21 +1,26 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
-import { apiPost } from "../config/api";
+import sdk from "../lib/tsafv-sdk";
+import { setToken as storeToken } from "../lib/authStore";
 
-export default function RegisterScreen({ onGoLogin }) {
+export default function RegisterScreen({ navigation, onGoLogin }) {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleRegister = async () => {
-    const res = await apiPost("/api/auth/register", {
-      nombre,
-      email,
-      password,
-    });
+    const res = await sdk.register({ nombre, email, password });
     if (res.status === 201 || res.status === 200) {
+      // try auto-login
+      const loginRes = await sdk.login(email, password);
+      if (loginRes.status === 200 && loginRes.data?.token) {
+        const t = loginRes.data.token;
+        await storeToken(t);
+        navigation.replace("Home", { token: t });
+        return;
+      }
       Alert.alert("Registro", "Usuario creado. Por favor inicia sesión.");
-      onGoLogin();
+      if (onGoLogin) onGoLogin();
     } else {
       Alert.alert("Error", res.data?.message || "Error registrando usuario");
     }

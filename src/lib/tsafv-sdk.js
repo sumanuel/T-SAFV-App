@@ -28,6 +28,10 @@ export async function createAsociacion(userToken, payload) {
   return apiPost("/api/asociaciones", payload, userToken);
 }
 
+export async function getUnits(userToken) {
+  return apiGet("/api/unidades", userToken);
+}
+
 export default {
   register,
   login,
@@ -35,4 +39,5 @@ export default {
   acceptInvitation,
   createInvitacion,
   createAsociacion,
+  getUnits,
 };

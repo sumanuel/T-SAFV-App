@@ -1,15 +1,18 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
-import { apiPost } from "../config/api";
+import sdk from "../lib/tsafv-sdk";
+import { setToken as storeToken } from "../lib/authStore";
 
-export default function LoginScreen({ onLoginSuccess, onGoRegister }) {
+export default function LoginScreen({ navigation, onGoRegister }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
-    const res = await apiPost("/api/auth/login", { email, password });
+    const res = await sdk.login(email, password);
     if (res.status === 200 && res.data?.token) {
-      onLoginSuccess(res.data.token);
+      const t = res.data.token;
+      await storeToken(t);
+      navigation.replace("Home", { token: t });
     } else {
       Alert.alert("Error", res.data?.message || "Error logging in");
     }

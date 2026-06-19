@@ -1,15 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, ActivityIndicator, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LoginScreen from './src/screens/LoginScreen';
-import RegisterScreen from './src/screens/RegisterScreen';
-import HomeScreen from './src/screens/HomeScreen';
-import AcceptInviteScreen from './src/screens/AcceptInviteScreen';
-import InvitationsScreen from './src/screens/InvitationsScreen';
-import UnitsScreen from './src/screens/UnitsScreen';
-import { getToken as getStoredToken, setToken as storeToken, deleteToken as removeStoredToken } from './src/lib/authStore';
+import React, { useEffect, useState } from "react";
+import { StatusBar } from "expo-status-bar";
+import { StyleSheet, ActivityIndicator, View } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import LoginScreen from "./src/screens/LoginScreen";
+import RegisterScreen from "./src/screens/RegisterScreen";
+import HomeScreen from "./src/screens/HomeScreen";
+import AcceptInviteScreen from "./src/screens/AcceptInviteScreen";
+import InvitationsScreen from "./src/screens/InvitationsScreen";
+import UnitsScreen from "./src/screens/UnitsScreen";
+import {
+  getToken as getStoredToken,
+  setToken as storeToken,
+  deleteToken as removeStoredToken,
+} from "./src/lib/authStore";
 
 const Stack = createNativeStackNavigator();
 
@@ -22,16 +26,16 @@ export default function App() {
       const t = await getStoredToken();
       if (t) {
         setToken(t);
-        setInitialRoute('Home');
+        setInitialRoute("Home");
       } else {
-        setInitialRoute('Login');
+        setInitialRoute("Login");
       }
     })();
   }, []);
 
   if (!initialRoute) {
     return (
-      <View style={{flex:1,justifyContent:'center'}}>
+      <View style={{ flex: 1, justifyContent: "center" }}>
         <ActivityIndicator />
       </View>
     );
@@ -47,29 +51,48 @@ export default function App() {
               onLoginSuccess={async (t) => {
                 await storeToken(t);
                 setToken(t);
-                props.navigation.replace('Home', { token: t });
+                props.navigation.replace("Home", { token: t });
               }}
-              onGoRegister={() => props.navigation.navigate('Register')}
+              onGoRegister={() => props.navigation.navigate("Register")}
             />
           )}
         </Stack.Screen>
 
         <Stack.Screen name="Register">
           {(props) => (
-            <RegisterScreen {...props} onGoLogin={() => props.navigation.replace('Login')} />
+            <RegisterScreen
+              {...props}
+              onGoLogin={() => props.navigation.replace("Login")}
+            />
           )}
         </Stack.Screen>
 
         <Stack.Screen name="Home">
-          {(props) => <HomeScreen {...props} route={{ ...props.route, params: { token } }} />}
+          {(props) => (
+            <HomeScreen
+              {...props}
+              route={{ ...props.route, params: { token } }}
+            />
+          )}
         </Stack.Screen>
 
         <Stack.Screen name="AcceptInvite">
-          {(props) => <AcceptInviteScreen {...props} token={token} onDone={() => props.navigation.goBack()} />}
+          {(props) => (
+            <AcceptInviteScreen
+              {...props}
+              token={token}
+              onDone={() => props.navigation.goBack()}
+            />
+          )}
         </Stack.Screen>
 
         <Stack.Screen name="Invitations">
-          {(props) => <InvitationsScreen {...props} route={{ ...props.route, params: { token } }} />}
+          {(props) => (
+            <InvitationsScreen
+              {...props}
+              route={{ ...props.route, params: { token } }}
+            />
+          )}
         </Stack.Screen>
 
         <Stack.Screen name="Units" component={UnitsScreen} />

@@ -1,6 +1,6 @@
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from "expo-secure-store";
 
-const TOKEN_KEY = 'tsafv_token';
+const TOKEN_KEY = "tsafv_token";
 
 export async function getToken() {
   try {

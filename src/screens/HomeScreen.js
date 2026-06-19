@@ -1,18 +1,18 @@
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {
   ActionRow,
   AppScreen,
   EmptyState,
-  HeroBanner,
   InfoPill,
+  MetricBadge,
   SectionHeader,
-  StatPill,
   SurfaceCard,
 } from "../components/AppChrome";
 import { useAppSession } from "../context/AppSessionContext";
 import {
+  formatDateTime,
   getRoleMeta,
   getStateMeta,
   palette,
@@ -29,7 +29,7 @@ export default function HomeScreen({ navigation, onOpenFichaMenu }) {
     setActiveAssociationId,
     loading,
     error,
-    user,
+    lastSyncAt,
     refreshSession,
   } = useAppSession();
 
@@ -72,30 +72,104 @@ export default function HomeScreen({ navigation, onOpenFichaMenu }) {
 
   return (
     <AppScreen scroll contentContainerStyle={styles.content}>
-      <HeroBanner
-        eyebrow="Panel operativo"
-        title={
-          activeAssociation ? activeAssociation.nombre : "Operación T-SAFV"
-        }
-        subtitle={
-          activeAssociation
-            ? "Centraliza asociaciones, unidades y registros fiscales con una navegación clara para trabajo diario."
-            : "Organiza asociaciones, propietarios y trazas desde una sola consola móvil."
-        }
-      >
-        <StatPill label="Asociaciones" value={associations.length} />
-        <StatPill label="Invitaciones" value={invitations.length} />
-        <StatPill label="Usuario" value={user?.id || "-"} />
-      </HeroBanner>
+      <View style={styles.heroShell}>
+        <View style={styles.heroGlow} />
+        <View style={styles.heroTopRow}>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroEyebrow}>Panel operativo</Text>
+            <Text style={styles.heroTitle}>
+              {activeAssociation
+                ? activeAssociation.nombre
+                : "Operación T-SAFV"}
+            </Text>
+            <Text style={styles.heroSubtitle}>
+              Última sincronización: {formatDateTime(lastSyncAt || new Date())}
+            </Text>
+          </View>
 
-      <SectionHeader
-        title="Accesos clave"
-        subtitle="Tareas frecuentes organizadas para operación diaria similar al tablero comercial de tienda-app."
-      />
-      <View style={styles.actionList}>
-        {actions.map((item) => (
-          <ActionRow key={item.key} {...item} />
-        ))}
+          <View style={styles.heroActionsCol}>
+            <Pressable onPress={refreshSession} style={styles.circleAction}>
+              <Ionicons
+                name="refresh-outline"
+                size={20}
+                color={palette.surface}
+              />
+            </Pressable>
+            <Pressable
+              onPress={() => navigation.getParent()?.navigate("Invitations")}
+              style={styles.circleAction}
+            >
+              <Ionicons
+                name="mail-unread-outline"
+                size={20}
+                color={palette.surface}
+              />
+              {invitations.length ? (
+                <View style={styles.badgeBubble}>
+                  <Text style={styles.badgeText}>{invitations.length}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.heroButtonRow}>
+          <Pressable style={styles.heroPrimaryButton} onPress={onOpenFichaMenu}>
+            <Text style={styles.heroPrimaryButtonText}>Abrir ficha</Text>
+          </Pressable>
+          <Pressable
+            style={styles.heroSecondaryButton}
+            onPress={() =>
+              activeAssociation
+                ? navigation.navigate("Traza")
+                : navigation.getParent()?.navigate("CreateAssociation")
+            }
+          >
+            <Text style={styles.heroSecondaryButtonText}>
+              {activeAssociation ? "Ver traza" : "Crear asociación"}
+            </Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.heroAssociationBlock}>
+          <Text style={styles.heroSectionLabel}>Asociaciones disponibles</Text>
+          {associations.length ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.heroChipsRow}
+            >
+              {associations.map((association) => {
+                const selected =
+                  String(association.id) === String(activeAssociationId);
+                return (
+                  <Pressable
+                    key={association.id}
+                    onPress={() => setActiveAssociationId(association.id)}
+                    style={[
+                      styles.associationChip,
+                      selected ? styles.associationChipActive : null,
+                    ]}
+                  >
+                    <Text
+                      style={
+                        selected
+                          ? styles.associationChipTextActive
+                          : styles.associationChipText
+                      }
+                    >
+                      {association.nombre}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <Text style={styles.heroEmptyText}>
+              Crea o acepta una asociación para comenzar la operación.
+            </Text>
+          )}
+        </View>
       </View>
 
       <SectionHeader
@@ -103,7 +177,7 @@ export default function HomeScreen({ navigation, onOpenFichaMenu }) {
         subtitle={
           error
             ? error
-            : "Selecciona una asociación activa para usar Ficha, Traza y vistas detalladas."
+            : "Cada tarjeta resume tu rol y la estructura operativa de la asociación."
         }
         actionLabel="Actualizar"
         onActionPress={refreshSession}
@@ -121,8 +195,10 @@ export default function HomeScreen({ navigation, onOpenFichaMenu }) {
         <EmptyState
           title="No hay asociaciones activas"
           message="Cuando recibas una invitación o crees una asociación, aparecerá aquí como punto de trabajo principal."
-          actionLabel="Aceptar invitación"
-          onActionPress={() => navigation.getParent()?.navigate("AcceptInvite")}
+          actionLabel="Crear asociación"
+          onActionPress={() =>
+            navigation.getParent()?.navigate("CreateAssociation")
+          }
         />
       ) : null}
 
@@ -159,6 +235,42 @@ export default function HomeScreen({ navigation, onOpenFichaMenu }) {
                   <View style={styles.cardPills}>
                     <InfoPill {...role} />
                     <InfoPill {...state} />
+                  </View>
+                </View>
+
+                <View style={styles.metricRow}>
+                  <MetricBadge
+                    label="Admins"
+                    value={association.admin_count || 0}
+                  />
+                  <MetricBadge
+                    label="Fiscales"
+                    value={association.fiscal_count || 0}
+                    tone="warning"
+                  />
+                  <MetricBadge
+                    label="Propietarios"
+                    value={association.propietario_count || 0}
+                    tone="success"
+                  />
+                  <MetricBadge
+                    label="Unidades"
+                    value={association.units_count || 0}
+                  />
+                </View>
+
+                <View style={styles.cardMetaGrid}>
+                  <View style={styles.metaInlineCard}>
+                    <Text style={styles.metaInlineLabel}>Miembros activos</Text>
+                    <Text style={styles.metaInlineValue}>
+                      {association.members_count || 0}
+                    </Text>
+                  </View>
+                  <View style={styles.metaInlineCard}>
+                    <Text style={styles.metaInlineLabel}>Trazas hoy</Text>
+                    <Text style={styles.metaInlineValue}>
+                      {association.trazas_hoy || 0}
+                    </Text>
                   </View>
                 </View>
 
@@ -201,6 +313,16 @@ export default function HomeScreen({ navigation, onOpenFichaMenu }) {
           );
         })}
       </View>
+
+      <SectionHeader
+        title="Accesos clave"
+        subtitle="Tareas frecuentes organizadas para operación diaria similar al tablero comercial de tienda-app."
+      />
+      <View style={styles.actionList}>
+        {actions.map((item) => (
+          <ActionRow key={item.key} {...item} />
+        ))}
+      </View>
     </AppScreen>
   );
 }
@@ -209,6 +331,144 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.lg,
     paddingBottom: 132,
+  },
+  heroShell: {
+    backgroundColor: palette.heroTop,
+    borderRadius: 34,
+    padding: spacing.xl,
+    gap: spacing.lg,
+    overflow: "hidden",
+    ...palette.shadow,
+  },
+  heroGlow: {
+    position: "absolute",
+    right: -40,
+    top: -25,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  heroTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  heroCopy: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  heroEyebrow: {
+    color: palette.heroTextSoft,
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    color: palette.surface,
+    fontSize: 34,
+    fontWeight: "900",
+  },
+  heroSubtitle: {
+    color: palette.heroTextSoft,
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  heroActionsCol: {
+    gap: spacing.sm,
+  },
+  circleAction: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: palette.heroSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeBubble: {
+    position: "absolute",
+    top: -3,
+    right: -3,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: palette.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 5,
+  },
+  badgeText: {
+    color: palette.heroTop,
+    fontSize: 11,
+    fontWeight: "900",
+  },
+  heroButtonRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  heroPrimaryButton: {
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: radii.pill,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+  },
+  heroPrimaryButtonText: {
+    color: palette.surface,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  heroSecondaryButton: {
+    flex: 1,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+    paddingVertical: spacing.md,
+    alignItems: "center",
+  },
+  heroSecondaryButtonText: {
+    color: palette.surface,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  heroAssociationBlock: {
+    gap: spacing.sm,
+  },
+  heroSectionLabel: {
+    color: palette.heroTextSoft,
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.9,
+  },
+  heroChipsRow: {
+    gap: spacing.sm,
+    paddingRight: spacing.sm,
+  },
+  associationChip: {
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  associationChipActive: {
+    backgroundColor: palette.surface,
+  },
+  associationChipText: {
+    color: palette.surface,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  associationChipTextActive: {
+    color: palette.heroTop,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  heroEmptyText: {
+    color: palette.heroTextSoft,
+    fontSize: 13,
+    lineHeight: 19,
   },
   actionList: {
     gap: spacing.sm,
@@ -232,6 +492,32 @@ const styles = StyleSheet.create({
   associationCardActive: {
     borderColor: palette.primaryDeep,
     backgroundColor: "#F8FBFF",
+  },
+  metricRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  cardMetaGrid: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  metaInlineCard: {
+    flex: 1,
+    backgroundColor: palette.surfaceMuted,
+    borderRadius: 16,
+    padding: spacing.md,
+    gap: 4,
+  },
+  metaInlineLabel: {
+    color: palette.inkMuted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  metaInlineValue: {
+    color: palette.ink,
+    fontSize: 18,
+    fontWeight: "800",
   },
   cardHeader: {
     gap: spacing.sm,

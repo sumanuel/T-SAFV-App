@@ -48,6 +48,7 @@ export function AppSessionProvider({ token, onSignOut, children }) {
   const [activeAssociationId, setActiveAssociationId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastSyncAt, setLastSyncAt] = useState(null);
 
   const refreshSession = useCallback(async () => {
     setLoading(true);
@@ -66,6 +67,7 @@ export function AppSessionProvider({ token, onSignOut, children }) {
 
       setAssociations(nextAssociations);
       setInvitations(nextInvitations);
+      setLastSyncAt(new Date().toISOString());
       setActiveAssociationId((current) => {
         if (!nextAssociations.length) return null;
         if (
@@ -108,6 +110,7 @@ export function AppSessionProvider({ token, onSignOut, children }) {
       refreshSession,
       loading,
       error,
+      lastSyncAt,
       signOut: onSignOut,
     }),
     [
@@ -119,6 +122,7 @@ export function AppSessionProvider({ token, onSignOut, children }) {
       refreshSession,
       loading,
       error,
+      lastSyncAt,
       onSignOut,
     ],
   );

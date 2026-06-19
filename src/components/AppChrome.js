@@ -26,18 +26,25 @@ export function AppScreen({
 
   if (scroll) {
     return (
-      <ScrollView
-        style={[styles.screenShell, style]}
-        contentContainerStyle={baseStyle}
-        showsVerticalScrollIndicator={false}
-      >
-        {children}
-      </ScrollView>
+      <View style={[styles.screenShell, style]}>
+        <View style={styles.backgroundOrbTop} />
+        <View style={styles.backgroundOrbBottom} />
+        <ScrollView
+          contentContainerStyle={baseStyle}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </ScrollView>
+      </View>
     );
   }
 
   return (
-    <View style={[styles.screenShell, styles.screen, style]}>{children}</View>
+    <View style={[styles.screenShell, style]}>
+      <View style={styles.backgroundOrbTop} />
+      <View style={styles.backgroundOrbBottom} />
+      <View style={styles.screen}>{children}</View>
+    </View>
   );
 }
 
@@ -72,6 +79,19 @@ export function SectionHeader({ title, subtitle, actionLabel, onActionPress }) {
 
 export function SurfaceCard({ children, style }) {
   return <View style={[styles.surfaceCard, style]}>{children}</View>;
+}
+
+export function MetricBadge({ label, value, tone = "primary" }) {
+  const colors = toneToColors(tone);
+
+  return (
+    <View style={[styles.metricBadge, { backgroundColor: colors.iconBg }]}>
+      <Text style={[styles.metricBadgeValue, { color: colors.iconColor }]}>
+        {value}
+      </Text>
+      <Text style={styles.metricBadgeLabel}>{label}</Text>
+    </View>
+  );
 }
 
 export function DetailHeader({
@@ -182,6 +202,25 @@ const styles = StyleSheet.create({
   screenShell: {
     flex: 1,
     backgroundColor: palette.background,
+    overflow: "hidden",
+  },
+  backgroundOrbTop: {
+    position: "absolute",
+    top: -130,
+    right: -60,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: "rgba(46, 147, 250, 0.12)",
+  },
+  backgroundOrbBottom: {
+    position: "absolute",
+    bottom: -120,
+    left: -75,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: "rgba(22, 105, 209, 0.09)",
   },
   screen: {
     paddingHorizontal: spacing.lg,
@@ -257,6 +296,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
     padding: spacing.lg,
+    ...shadow,
   },
   detailHeader: {
     flexDirection: "row",
@@ -328,6 +368,22 @@ const styles = StyleSheet.create({
   infoPillLabel: {
     fontSize: 12,
     fontWeight: "800",
+  },
+  metricBadge: {
+    minWidth: 86,
+    borderRadius: 18,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: 2,
+  },
+  metricBadgeValue: {
+    fontSize: 19,
+    fontWeight: "900",
+  },
+  metricBadgeLabel: {
+    color: palette.inkSoft,
+    fontSize: 12,
+    fontWeight: "700",
   },
   actionRow: {
     flexDirection: "row",

@@ -19,36 +19,85 @@ export default function MainTabs({ navigation }) {
   const [showFichaMenu, setShowFichaMenu] = useState(false);
   const { activeAssociation } = useAppSession();
 
-  const menuOptions = useMemo(
+  const menuSections = useMemo(
     () => [
       {
-        key: "asociaciones",
-        label: "Asociaciones",
-        description:
-          "Vista maestra de afiliaciones, selección y resumen operativo.",
-        icon: "business-outline",
-        onPress: () =>
-          navigation.navigate("Directory", { mode: "asociaciones" }),
+        key: "consultar",
+        title: "Consulta",
+        options: [
+          {
+            key: "asociaciones",
+            label: "Asociaciones",
+            description:
+              "Vista maestra de afiliaciones, selección y resumen operativo.",
+            icon: "business-outline",
+            onPress: () =>
+              navigation.navigate("Directory", { mode: "asociaciones" }),
+          },
+          {
+            key: "propietarios",
+            label: "Propietarios",
+            description:
+              "Consulta los miembros con rol propietario de la asociación activa.",
+            icon: "people-outline",
+            onPress: () =>
+              navigation.navigate("Directory", { mode: "propietarios" }),
+            disabled: !activeAssociation,
+          },
+          {
+            key: "fiscales",
+            label: "Fiscales",
+            description:
+              "Revisa el equipo fiscal y su cobertura sobre las unidades.",
+            icon: "shield-checkmark-outline",
+            onPress: () =>
+              navigation.navigate("Directory", { mode: "fiscales" }),
+            disabled: !activeAssociation,
+          },
+        ],
       },
       {
-        key: "propietarios",
-        label: "Propietarios",
-        description:
-          "Consulta los miembros con rol propietario de la asociación activa.",
-        icon: "people-outline",
-        onPress: () =>
-          navigation.navigate("Directory", { mode: "propietarios" }),
-      },
-      {
-        key: "fiscales",
-        label: "Fiscales",
-        description:
-          "Revisa el equipo fiscal y su cobertura sobre las unidades.",
-        icon: "shield-checkmark-outline",
-        onPress: () => navigation.navigate("Directory", { mode: "fiscales" }),
+        key: "crear",
+        title: "Registrar",
+        options: [
+          {
+            key: "crear-asociacion",
+            label: "Nueva asociación",
+            description:
+              "Crea una asociación operativa con sus datos fiscales y de contacto.",
+            icon: "add-circle-outline",
+            onPress: () => navigation.navigate("CreateAssociation"),
+          },
+          {
+            key: "crear-invitacion",
+            label: "Invitar miembro",
+            description:
+              "Genera una invitación para administrador, fiscal o propietario.",
+            icon: "mail-unread-outline",
+            onPress: () => navigation.navigate("CreateInvitation"),
+            disabled: !activeAssociation || activeAssociation?.rol !== "ADMIN",
+            badge:
+              !activeAssociation || activeAssociation?.rol === "ADMIN"
+                ? null
+                : "Sólo admin",
+          },
+          {
+            key: "crear-registro",
+            label: "Registro fiscal",
+            description:
+              "Carga una fiscalización real para una unidad de la asociación activa.",
+            icon: "create-outline",
+            onPress: () => navigation.navigate("CreateFiscalRecord"),
+            disabled: !activeAssociation || activeAssociation?.rol !== "FISCAL",
+            badge:
+              !activeAssociation || activeAssociation?.rol === "FISCAL"
+                ? null
+                : "Sólo fiscal",
+          },
+        ],
       },
     ],
-    [navigation],
+    [activeAssociation, navigation],
   );
 
   return (
@@ -62,25 +111,10 @@ export default function MainTabs({ navigation }) {
           tabBarIcon: ({ focused }) => {
             const iconByRoute = {
               Inicio: "grid-outline",
-              Ficha: "add-outline",
+              Ficha: "apps-outline",
               Traza: "pulse-outline",
               Ajustes: "settings-outline",
             };
-
-            if (route.name === "Ficha") {
-              return (
-                <View style={styles.fichaTabWrap}>
-                  <View style={styles.fichaTabButton}>
-                    <Ionicons
-                      name="apps-outline"
-                      size={22}
-                      color={palette.surface}
-                    />
-                  </View>
-                  <Text style={styles.tabLabelActive}>Ficha</Text>
-                </View>
-              );
-            }
 
             return (
               <View style={styles.tabItem}>
@@ -88,12 +122,17 @@ export default function MainTabs({ navigation }) {
                   style={[
                     styles.tabIconWrap,
                     focused ? styles.tabIconWrapFocused : null,
+                    route.name === "Ficha" ? styles.tabIconWrapFicha : null,
                   ]}
                 >
                   <Ionicons
                     name={iconByRoute[route.name] || "ellipse-outline"}
                     size={20}
-                    color={focused ? palette.primaryDeep : palette.inkMuted}
+                    color={
+                      focused || route.name === "Ficha"
+                        ? palette.primaryDeep
+                        : palette.inkMuted
+                    }
                   />
                 </View>
                 <Text style={focused ? styles.tabLabelActive : styles.tabLabel}>
@@ -135,7 +174,7 @@ export default function MainTabs({ navigation }) {
             ? `Asociación activa: ${activeAssociation.nombre}`
             : "Selecciona una asociación para navegar los registros claves."
         }
-        options={menuOptions}
+        sections={menuSections}
       />
     </>
   );
@@ -147,9 +186,9 @@ const styles = StyleSheet.create({
     left: spacing.lg,
     right: spacing.lg,
     bottom: spacing.lg,
-    height: 74,
+    height: 78,
     paddingHorizontal: spacing.md,
-    paddingTop: 12,
+    paddingTop: 10,
     borderTopWidth: 0,
     borderRadius: radii.lg,
     backgroundColor: palette.surface,
@@ -170,6 +209,11 @@ const styles = StyleSheet.create({
   tabIconWrapFocused: {
     backgroundColor: palette.primarySoft,
   },
+  tabIconWrapFicha: {
+    borderWidth: 1,
+    borderColor: palette.border,
+    backgroundColor: palette.surfaceMuted,
+  },
   tabLabel: {
     fontSize: 11,
     fontWeight: "700",
@@ -179,20 +223,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "800",
     color: palette.primaryDeep,
-  },
-  fichaTabWrap: {
-    marginTop: -34,
-    alignItems: "center",
-    gap: 6,
-  },
-  fichaTabButton: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: palette.primaryDeep,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 5,
-    borderColor: palette.background,
   },
 });

@@ -8,8 +8,13 @@ export default function QuickActionMenu({
   onClose,
   title,
   subtitle,
+  sections,
   options,
 }) {
+  const groupedSections = sections || [
+    { key: "default", options: options || [] },
+  ];
+
   return (
     <Modal
       visible={visible}
@@ -24,38 +29,56 @@ export default function QuickActionMenu({
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
           </View>
           <View style={styles.optionList}>
-            {options.map((option, index) => (
-              <Pressable
-                key={option.key}
-                onPress={() => {
-                  onClose();
-                  option.onPress();
-                }}
-                style={({ pressed }) => [
-                  styles.option,
-                  pressed ? styles.optionPressed : null,
-                  index !== options.length - 1 ? styles.optionBorder : null,
-                ]}
-              >
-                <View style={styles.optionIconWrap}>
-                  <Ionicons
-                    name={option.icon}
-                    size={20}
-                    color={palette.primaryDeep}
-                  />
-                </View>
-                <View style={styles.optionCopy}>
-                  <Text style={styles.optionLabel}>{option.label}</Text>
-                  <Text style={styles.optionDescription}>
-                    {option.description}
-                  </Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color={palette.inkMuted}
-                />
-              </Pressable>
+            {groupedSections.map((section) => (
+              <View key={section.key} style={styles.sectionBlock}>
+                {section.title ? (
+                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                ) : null}
+                {section.options.map((option, index) => (
+                  <Pressable
+                    key={option.key}
+                    disabled={option.disabled}
+                    onPress={() => {
+                      onClose();
+                      option.onPress();
+                    }}
+                    style={({ pressed }) => [
+                      styles.option,
+                      pressed && !option.disabled ? styles.optionPressed : null,
+                      option.disabled ? styles.optionDisabled : null,
+                      index !== section.options.length - 1
+                        ? styles.optionBorder
+                        : null,
+                    ]}
+                  >
+                    <View style={styles.optionIconWrap}>
+                      <Ionicons
+                        name={option.icon}
+                        size={20}
+                        color={palette.primaryDeep}
+                      />
+                    </View>
+                    <View style={styles.optionCopy}>
+                      <Text style={styles.optionLabel}>{option.label}</Text>
+                      <Text style={styles.optionDescription}>
+                        {option.description}
+                      </Text>
+                    </View>
+                    {option.badge ? (
+                      <View style={styles.optionBadge}>
+                        <Text style={styles.optionBadgeText}>
+                          {option.badge}
+                        </Text>
+                      </View>
+                    ) : null}
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color={palette.inkMuted}
+                    />
+                  </Pressable>
+                ))}
+              </View>
             ))}
           </View>
         </Pressable>
@@ -98,6 +121,21 @@ const styles = StyleSheet.create({
   },
   optionList: {
     paddingHorizontal: spacing.sm,
+    gap: spacing.sm,
+  },
+  sectionBlock: {
+    backgroundColor: palette.surfaceMuted,
+    borderRadius: radii.md,
+    overflow: "hidden",
+  },
+  sectionTitle: {
+    color: palette.inkMuted,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
   },
   option: {
     flexDirection: "row",
@@ -108,6 +146,9 @@ const styles = StyleSheet.create({
   },
   optionPressed: {
     backgroundColor: palette.surfaceMuted,
+  },
+  optionDisabled: {
+    opacity: 0.48,
   },
   optionBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -134,5 +175,16 @@ const styles = StyleSheet.create({
     color: palette.inkSoft,
     fontSize: 12,
     lineHeight: 18,
+  },
+  optionBadge: {
+    backgroundColor: palette.primarySoft,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: radii.pill,
+  },
+  optionBadgeText: {
+    color: palette.primaryDeep,
+    fontSize: 11,
+    fontWeight: "800",
   },
 });

@@ -1,5 +1,18 @@
 import { apiGet, apiPost } from "../config/api";
 
+function buildQueryString(params) {
+  const entries = Object.entries(params || {}).filter(([, value]) => {
+    return value !== undefined && value !== null && value !== "";
+  });
+
+  if (!entries.length) return "";
+
+  const searchParams = new URLSearchParams();
+  entries.forEach(([key, value]) => searchParams.append(key, String(value)));
+
+  return `?${searchParams.toString()}`;
+}
+
 export async function register(data) {
   return apiPost("/api/auth/register", data);
 }
@@ -48,6 +61,22 @@ export async function getAssociationTraceability(userToken, asociacionId) {
   return apiGet(`/api/asociaciones/${asociacionId}/trazabilidad`, userToken);
 }
 
+export async function getAssociationTraceabilityFiltered(
+  userToken,
+  asociacionId,
+  filters,
+) {
+  const query = buildQueryString(filters);
+  return apiGet(
+    `/api/asociaciones/${asociacionId}/trazabilidad${query}`,
+    userToken,
+  );
+}
+
+export async function createFiscalRecord(userToken, payload) {
+  return apiPost("/api/fiscal/registros", payload, userToken);
+}
+
 export default {
   register,
   login,
@@ -60,4 +89,6 @@ export default {
   getAssociationMembers,
   getAssociationUnits,
   getAssociationTraceability,
+  getAssociationTraceabilityFiltered,
+  createFiscalRecord,
 };

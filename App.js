@@ -12,6 +12,9 @@ import AcceptInviteScreen from "./src/screens/AcceptInviteScreen";
 import InvitationsScreen from "./src/screens/InvitationsScreen";
 import UnitsScreen from "./src/screens/UnitsScreen";
 import DirectoryScreen from "./src/screens/DirectoryScreen";
+import CreateAssociationScreen from "./src/screens/CreateAssociationScreen";
+import CreateInvitationScreen from "./src/screens/CreateInvitationScreen";
+import FiscalRecordFormScreen from "./src/screens/FiscalRecordFormScreen";
 import MainTabs from "./src/navigation/MainTabs";
 import {
   getToken as getStoredToken,
@@ -80,6 +83,18 @@ export default function App() {
             <Stack.Screen name="AcceptInvite" component={AcceptInviteScreen} />
             <Stack.Screen name="Units" component={UnitsScreen} />
             <Stack.Screen name="Directory" component={DirectoryScreen} />
+            <Stack.Screen
+              name="CreateAssociation"
+              component={CreateAssociationScreen}
+            />
+            <Stack.Screen
+              name="CreateInvitation"
+              component={CreateInvitationScreen}
+            />
+            <Stack.Screen
+              name="CreateFiscalRecord"
+              component={FiscalRecordFormScreen}
+            />
           </Stack.Navigator>
         </AppSessionProvider>
       ) : (

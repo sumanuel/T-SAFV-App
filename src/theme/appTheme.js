@@ -1,6 +1,7 @@
 export const palette = {
   background: "#EAF3FB",
   backgroundStrong: "#D8EAFB",
+  backgroundDeep: "#C7DDF4",
   surface: "#FFFFFF",
   surfaceMuted: "#F5F9FD",
   border: "#D0E0F2",
@@ -18,6 +19,10 @@ export const palette = {
   warningSoft: "#FFF1DE",
   danger: "#D55454",
   dangerSoft: "#FFE5E5",
+  heroTop: "#1D7C59",
+  heroBottom: "#2A8C66",
+  heroSoft: "rgba(255,255,255,0.12)",
+  heroTextSoft: "rgba(255,255,255,0.82)",
 };
 
 export const spacing = {
@@ -112,5 +117,18 @@ export function formatDateTime(value) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+  });
+}
+
+export function formatDate(value, fallback = "Sin fecha") {
+  if (!value) return fallback;
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+
+  return parsed.toLocaleDateString("es-VE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 }

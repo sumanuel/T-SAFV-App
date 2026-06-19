@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -17,15 +17,21 @@ import { useAppSession } from "../context/AppSessionContext";
 import sdk from "../lib/tsafv-sdk";
 import { palette, radii, spacing } from "../theme/appTheme";
 
-export default function CreateAssociationScreen({ navigation }) {
+export default function CreateAssociationScreen({ navigation, route }) {
   const { token, refreshSession } = useAppSession();
-  const [form, setForm] = useState({
-    nombre: "",
-    rif: "",
-    direccion_fiscal: "",
-    email: "",
-    telefonos: "",
-  });
+  const association = route.params?.association || null;
+  const isEditing = Boolean(association?.id);
+  const initialForm = useMemo(
+    () => ({
+      nombre: association?.nombre || "",
+      rif: association?.rif || "",
+      direccion_fiscal: association?.direccion_fiscal || "",
+      email: association?.email || "",
+      telefonos: association?.telefonos || "",
+    }),
+    [association],
+  );
+  const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
 
   const updateField = (key, value) =>
@@ -41,19 +47,24 @@ export default function CreateAssociationScreen({ navigation }) {
     }
 
     setSubmitting(true);
-    const res = await sdk.createAsociacion(token, {
+    const payload = {
       nombre: form.nombre.trim(),
       rif: form.rif.trim(),
       direccion_fiscal: form.direccion_fiscal.trim(),
       email: form.email.trim(),
       telefonos: form.telefonos.trim(),
-    });
+    };
+    const res = isEditing
+      ? await sdk.updateAsociacion(token, association.id, payload)
+      : await sdk.createAsociacion(token, payload);
 
     if (res.status === 201 || res.status === 200) {
       await refreshSession();
       Alert.alert(
-        "Asociación creada",
-        "La asociación fue registrada correctamente.",
+        isEditing ? "Asociación actualizada" : "Asociación creada",
+        isEditing
+          ? "Los datos de la asociación fueron actualizados correctamente."
+          : "La asociación fue registrada correctamente.",
       );
       navigation.goBack();
     } else {
@@ -68,8 +79,12 @@ export default function CreateAssociationScreen({ navigation }) {
   return (
     <AppScreen scroll contentContainerStyle={styles.content}>
       <DetailHeader
-        title="Nueva asociación"
-        subtitle="Registra la entidad operativa con sus datos fiscales y de contacto."
+        title={isEditing ? "Editar asociación" : "Nueva asociación"}
+        subtitle={
+          isEditing
+            ? "Actualiza los datos fiscales y operativos de la asociación activa."
+            : "Registra la entidad operativa con sus datos fiscales y de contacto."
+        }
         onBack={() => navigation.goBack()}
       />
 
@@ -114,7 +129,11 @@ export default function CreateAssociationScreen({ navigation }) {
           disabled={submitting}
         >
           <Text style={styles.primaryButtonText}>
-            {submitting ? "Guardando asociación..." : "Crear asociación"}
+            {submitting
+              ? "Guardando asociación..."
+              : isEditing
+                ? "Guardar cambios"
+                : "Crear asociación"}
           </Text>
         </Pressable>
       </SurfaceCard>

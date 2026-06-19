@@ -1,5 +1,12 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Pressable,
+  Share,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   AppScreen,
@@ -11,7 +18,7 @@ import {
 } from "../components/AppChrome";
 import { useAppSession } from "../context/AppSessionContext";
 import sdk from "../lib/tsafv-sdk";
-import { formatDateTime, palette, spacing } from "../theme/appTheme";
+import { formatDateTime, palette, radii, spacing } from "../theme/appTheme";
 
 function normalizeDateInput(value) {
   return value.replace(/[^0-9-]/g, "").slice(0, 10);
@@ -112,6 +119,36 @@ export default function TraceabilityScreen({ navigation }) {
     });
   }, [items, selectedFiscalId, selectedUnitId, startDate, endDate]);
 
+  const exportTraceability = async () => {
+    if (!filteredItems.length) return;
+
+    const header = ["Fecha", "Unidad", "Fiscal", "Chofer", "Destino", "Pasajeros"];
+    const rows = filteredItems.map((item) => {
+      const unit = unitMap[String(item.unidad_id)];
+      const fiscal = memberMap[String(item.fiscal_id)];
+
+      return [
+        formatDateTime(item.fecha_hora_registro),
+        unit?.placa || item.unidad_id || "",
+        fiscal?.nombre || item.fiscal_id || "",
+        item.chofer || "",
+        item.destino || "",
+        item.pasajeros ?? "",
+      ];
+    });
+
+    const csv = [header, ...rows]
+      .map((line) =>
+        line.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","),
+      )
+      .join("\n");
+
+    await Share.share({
+      title: "Exportación de trazas",
+      message: csv,
+    });
+  };
+
   return (
     <AppScreen scroll contentContainerStyle={styles.content}>
       <DetailHeader
@@ -120,6 +157,8 @@ export default function TraceabilityScreen({ navigation }) {
           activeAssociation ? activeAssociation.nombre : "Sin asociación activa"
         }
         onBack={() => navigation.navigate("Inicio")}
+        rightActionLabel="Exportar"
+        onRightActionPress={exportTraceability}
       />
 
       <SurfaceCard style={styles.filterCard}>

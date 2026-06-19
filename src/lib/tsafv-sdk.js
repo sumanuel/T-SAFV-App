@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from "../config/api";
+import { API_BASE_URL, apiGet, apiPost } from "../config/api";
 
 function buildQueryString(params) {
   const entries = Object.entries(params || {}).filter(([, value]) => {
@@ -45,6 +45,19 @@ export async function createAsociacion(userToken, payload) {
   return apiPost("/api/asociaciones", payload, userToken);
 }
 
+export async function updateAsociacion(userToken, asociacionId, payload) {
+  const res = await fetch(`${API_BASE_URL}/api/asociaciones/${asociacionId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${userToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => null);
+  return { status: res.status, data };
+}
+
 export async function getUnits(userToken) {
   return apiGet("/api/unidades", userToken);
 }
@@ -77,6 +90,19 @@ export async function createFiscalRecord(userToken, payload) {
   return apiPost("/api/fiscal/registros", payload, userToken);
 }
 
+export async function changeMembershipState(
+  userToken,
+  asociacionId,
+  membresiaId,
+  payload,
+) {
+  return apiPost(
+    `/api/asociaciones/${asociacionId}/membresias/${membresiaId}/state`,
+    payload,
+    userToken,
+  );
+}
+
 export default {
   register,
   login,
@@ -85,10 +111,12 @@ export default {
   acceptInvitation,
   createInvitacion,
   createAsociacion,
+  updateAsociacion,
   getUnits,
   getAssociationMembers,
   getAssociationUnits,
   getAssociationTraceability,
   getAssociationTraceabilityFiltered,
   createFiscalRecord,
+  changeMembershipState,
 };

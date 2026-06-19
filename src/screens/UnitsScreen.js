@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   AppScreen,
@@ -17,6 +17,7 @@ export default function UnitsScreen({ navigation }) {
   const { token, activeAssociation } = useAppSession();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [stateFilter, setStateFilter] = useState("ALL");
 
   const loadUnits = useCallback(async () => {
     if (!activeAssociation?.id) {
@@ -41,6 +42,11 @@ export default function UnitsScreen({ navigation }) {
     }, [loadUnits]),
   );
 
+  const filteredItems = items.filter((item) => {
+    if (stateFilter === "ALL") return true;
+    return (item.ultimo_estado || item.estado || "ACTIVO") === stateFilter;
+  });
+
   return (
     <AppScreen scroll contentContainerStyle={styles.content}>
       <DetailHeader
@@ -56,6 +62,34 @@ export default function UnitsScreen({ navigation }) {
         subtitle="Consulta unidades, estado actual y propietario asignado por asociación."
       />
 
+      <View style={styles.filterRow}>
+        {[
+          { key: "ALL", label: "Todas" },
+          { key: "ACTIVO", label: "Activas" },
+          { key: "SUSPENDIDO", label: "Suspendidas" },
+          { key: "INACTIVO", label: "Inactivas" },
+        ].map((item) => (
+          <Pressable
+            key={item.key}
+            onPress={() => setStateFilter(item.key)}
+            style={[
+              styles.filterChip,
+              stateFilter === item.key ? styles.filterChipActive : null,
+            ]}
+          >
+            <Text
+              style={
+                stateFilter === item.key
+                  ? styles.filterChipTextActive
+                  : styles.filterChipText
+              }
+            >
+              {item.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
       {loading ? (
         <SurfaceCard>
           <Text style={styles.loadingText}>
@@ -64,7 +98,7 @@ export default function UnitsScreen({ navigation }) {
         </SurfaceCard>
       ) : null}
 
-      {!loading && !items.length ? (
+      {!loading && !filteredItems.length ? (
         <EmptyState
           title="No hay unidades visibles"
           message="La asociación activa aún no tiene unidades asociadas o tu rol no permite consultarlas."
@@ -72,7 +106,7 @@ export default function UnitsScreen({ navigation }) {
       ) : null}
 
       <View style={styles.cardList}>
-        {items.map((item) => {
+        {filteredItems.map((item) => {
           const state = getStateMeta(item.ultimo_estado || item.estado);
 
           return (
@@ -95,8 +129,11 @@ export default function UnitsScreen({ navigation }) {
                 <View style={styles.metaBlock}>
                   <Text style={styles.metaLabel}>Propietario</Text>
                   <Text style={styles.metaValue}>
-                    {item.propietario_id || "Sin asignar"}
+                    {item.propietario_nombre || item.propietario_id || "Sin asignar"}
                   </Text>
+                  {item.propietario_email ? (
+                    <Text style={styles.metaHelper}>{item.propietario_email}</Text>
+                  ) : null}
                 </View>
                 <View style={styles.metaBlock}>
                   <Text style={styles.metaLabel}>Asociación</Text>
@@ -123,6 +160,33 @@ const styles = StyleSheet.create({
   },
   cardList: {
     gap: spacing.md,
+  },
+  filterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  filterChip: {
+    backgroundColor: palette.surfaceMuted,
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  filterChipActive: {
+    backgroundColor: palette.primaryDeep,
+    borderColor: palette.primaryDeep,
+  },
+  filterChipText: {
+    color: palette.ink,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  filterChipTextActive: {
+    color: palette.surface,
+    fontSize: 12,
+    fontWeight: "800",
   },
   unitCard: {
     gap: spacing.md,
@@ -166,5 +230,10 @@ const styles = StyleSheet.create({
     color: palette.ink,
     fontSize: 14,
     fontWeight: "700",
+  },
+  metaHelper: {
+    color: palette.inkSoft,
+    fontSize: 12,
+    marginTop: 4,
   },
 });

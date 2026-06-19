@@ -17,6 +17,7 @@ import {
   getStateMeta,
   palette,
   radii,
+  shadow,
   spacing,
 } from "../theme/appTheme";
 
@@ -338,7 +339,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.lg,
     overflow: "hidden",
-    ...palette.shadow,
+    ...shadow,
   },
   heroGlow: {
     position: "absolute",

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   AppScreen,
@@ -39,9 +39,11 @@ export default function DirectoryScreen({ navigation, route }) {
     associations,
     activeAssociationId,
     setActiveAssociationId,
+    refreshSession,
   } = useAppSession();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(mode !== "asociaciones");
+  const [memberStateFilter, setMemberStateFilter] = useState("ALL");
 
   const loadMembers = useCallback(async () => {
     if (mode === "asociaciones") {
@@ -72,9 +74,36 @@ export default function DirectoryScreen({ navigation, route }) {
   );
 
   const filteredMembers = useMemo(() => {
-    if (!config.role) return members;
-    return members.filter((member) => member.rol === config.role);
-  }, [config.role, members]);
+    return members.filter((member) => {
+      const matchesRole = config.role ? member.rol === config.role : true;
+      const matchesState =
+        memberStateFilter === "ALL"
+          ? true
+          : (member.estado_membresia || "ACTIVO") === memberStateFilter;
+      return matchesRole && matchesState;
+    });
+  }, [config.role, memberStateFilter, members]);
+
+  const handleChangeMemberState = async (member, estado) => {
+    if (!activeAssociation?.id || !member.membresia_id) {
+      return;
+    }
+
+    const res = await sdk.changeMembershipState(
+      token,
+      activeAssociation.id,
+      member.membresia_id,
+      { estado },
+    );
+
+    if (res.status === 200 || res.status === 201) {
+      await loadMembers();
+      await refreshSession();
+      return;
+    }
+
+    Alert.alert("Error", res.data?.message || "No se pudo cambiar el estado.");
+  };
 
   return (
     <AppScreen scroll contentContainerStyle={styles.content}>
@@ -121,6 +150,16 @@ export default function DirectoryScreen({ navigation, route }) {
                       ? "Asociación activa"
                       : "Usar como asociación activa"}
                   </Text>
+                  {association.rol === "ADMIN" ? (
+                    <Text
+                      onPress={() =>
+                        navigation.navigate("CreateAssociation", { association })
+                      }
+                      style={styles.inlineActionSecondary}
+                    >
+                      Editar datos
+                    </Text>
+                  ) : null}
                 </SurfaceCard>
               );
             })}
@@ -136,6 +175,34 @@ export default function DirectoryScreen({ navigation, route }) {
             }
             subtitle="Directorio operativo filtrado por rol dentro de la asociación seleccionada."
           />
+
+          <View style={styles.filterRow}>
+            {[
+              { key: "ALL", label: "Todos" },
+              { key: "ACTIVO", label: "Activos" },
+              { key: "SUSPENDIDO", label: "Suspendidos" },
+              { key: "INACTIVO", label: "Inactivos" },
+            ].map((item) => (
+              <Pressable
+                key={item.key}
+                onPress={() => setMemberStateFilter(item.key)}
+                style={[
+                  styles.filterChip,
+                  memberStateFilter === item.key ? styles.filterChipActive : null,
+                ]}
+              >
+                <Text
+                  style={
+                    memberStateFilter === item.key
+                      ? styles.filterChipTextActive
+                      : styles.filterChipText
+                  }
+                >
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
 
           {loading ? (
             <SurfaceCard>
@@ -155,6 +222,8 @@ export default function DirectoryScreen({ navigation, route }) {
           <View style={styles.cardList}>
             {filteredMembers.map((member) => {
               const role = getRoleMeta(member.rol);
+              const state = getStateMeta(member.estado_membresia);
+              const canManage = activeAssociation?.rol === "ADMIN";
 
               return (
                 <SurfaceCard key={member.id} style={styles.card}>
@@ -166,7 +235,33 @@ export default function DirectoryScreen({ navigation, route }) {
                   </Text>
                   <View style={styles.pillRow}>
                     <InfoPill {...role} />
+                    <InfoPill {...state} />
                   </View>
+                  {member.telefono ? (
+                    <Text style={styles.cardMeta}>{member.telefono}</Text>
+                  ) : null}
+                  {canManage ? (
+                    <View style={styles.memberActionsRow}>
+                      <Text
+                        onPress={() => handleChangeMemberState(member, "ACTIVO")}
+                        style={styles.inlineAction}
+                      >
+                        Activar
+                      </Text>
+                      <Text
+                        onPress={() => handleChangeMemberState(member, "SUSPENDIDO")}
+                        style={styles.inlineActionSecondary}
+                      >
+                        Suspender
+                      </Text>
+                      <Text
+                        onPress={() => handleChangeMemberState(member, "INACTIVO")}
+                        style={styles.inlineDangerAction}
+                      >
+                        Inactivar
+                      </Text>
+                    </View>
+                  ) : null}
                 </SurfaceCard>
               );
             })}
@@ -209,9 +304,51 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.xs,
   },
+  filterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  filterChip: {
+    backgroundColor: palette.surfaceMuted,
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  filterChipActive: {
+    backgroundColor: palette.primaryDeep,
+    borderColor: palette.primaryDeep,
+  },
+  filterChipText: {
+    color: palette.ink,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  filterChipTextActive: {
+    color: palette.surface,
+    fontSize: 12,
+    fontWeight: "800",
+  },
   inlineAction: {
     color: palette.primaryDeep,
     fontSize: 13,
     fontWeight: "800",
+  },
+  inlineActionSecondary: {
+    color: palette.warning,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  inlineDangerAction: {
+    color: palette.danger,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  memberActionsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md,
   },
 });

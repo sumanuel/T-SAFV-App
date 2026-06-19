@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import {
   NavigationContainer,
   createNavigationContainerRef,
@@ -8,22 +8,25 @@ import {
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
-import HomeScreen from "./src/screens/HomeScreen";
 import AcceptInviteScreen from "./src/screens/AcceptInviteScreen";
 import InvitationsScreen from "./src/screens/InvitationsScreen";
 import UnitsScreen from "./src/screens/UnitsScreen";
+import DirectoryScreen from "./src/screens/DirectoryScreen";
+import MainTabs from "./src/navigation/MainTabs";
 import {
   getToken as getStoredToken,
   deleteToken as removeStoredToken,
 } from "./src/lib/authStore";
 import { startTokenMonitor, stopTokenMonitor } from "./src/lib/authManager";
+import { AppSessionProvider } from "./src/context/AppSessionContext";
+import { palette } from "./src/theme/appTheme";
 
 const navigationRef = createNavigationContainerRef();
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  const [initialRoute, setInitialRoute] = useState(null);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [token, setToken] = useState(null);
 
   useEffect(() => {
@@ -31,13 +34,13 @@ export default function App() {
       const t = await getStoredToken();
       if (t) {
         setToken(t);
-        setInitialRoute("Home");
-      } else {
-        setInitialRoute("Login");
       }
+      setIsBootstrapping(false);
     })();
+
     startTokenMonitor(async () => {
       await removeStoredToken();
+      setToken(null);
       if (navigationRef.isReady()) {
         navigationRef.reset({ index: 0, routes: [{ name: "Login" }] });
       }
@@ -46,68 +49,76 @@ export default function App() {
     return () => stopTokenMonitor();
   }, []);
 
-  if (!initialRoute) {
+  const handleAuthSuccess = (nextToken) => {
+    setToken(nextToken);
+  };
+
+  const handleSignOut = async () => {
+    await removeStoredToken();
+    setToken(null);
+  };
+
+  if (isBootstrapping) {
     return (
-      <View style={{ flex: 1, justifyContent: "center" }}>
-        <ActivityIndicator />
+      <View style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color={palette.primaryDeep} />
       </View>
     );
   }
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator initialRouteName={initialRoute}>
-        <Stack.Screen name="Login">
-          {(props) => (
-            <LoginScreen
-              {...props}
-              onGoRegister={() => props.navigation.navigate("Register")}
-            />
-          )}
-        </Stack.Screen>
+      {token ? (
+        <AppSessionProvider token={token} onSignOut={handleSignOut}>
+          <Stack.Navigator
+            key="app-stack"
+            initialRouteName="MainTabs"
+            screenOptions={{ headerShown: false, animation: "fade" }}
+          >
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen name="Invitations" component={InvitationsScreen} />
+            <Stack.Screen name="AcceptInvite" component={AcceptInviteScreen} />
+            <Stack.Screen name="Units" component={UnitsScreen} />
+            <Stack.Screen name="Directory" component={DirectoryScreen} />
+          </Stack.Navigator>
+        </AppSessionProvider>
+      ) : (
+        <Stack.Navigator
+          key="auth-stack"
+          initialRouteName="Login"
+          screenOptions={{ headerShown: false, animation: "fade" }}
+        >
+          <Stack.Screen name="Login">
+            {(props) => (
+              <LoginScreen
+                {...props}
+                onAuthSuccess={handleAuthSuccess}
+                onGoRegister={() => props.navigation.navigate("Register")}
+              />
+            )}
+          </Stack.Screen>
 
-        <Stack.Screen name="Register">
-          {(props) => (
-            <RegisterScreen
-              {...props}
-              onGoLogin={() => props.navigation.replace("Login")}
-            />
-          )}
-        </Stack.Screen>
-
-        <Stack.Screen name="Home">
-          {(props) => (
-            <HomeScreen
-              {...props}
-              route={{ ...props.route, params: { token } }}
-            />
-          )}
-        </Stack.Screen>
-
-        <Stack.Screen name="AcceptInvite">
-          {(props) => (
-            <AcceptInviteScreen
-              {...props}
-              token={token}
-              onDone={() => props.navigation.goBack()}
-            />
-          )}
-        </Stack.Screen>
-
-        <Stack.Screen name="Invitations">
-          {(props) => (
-            <InvitationsScreen
-              {...props}
-              route={{ ...props.route, params: { token } }}
-            />
-          )}
-        </Stack.Screen>
-
-        <Stack.Screen name="Units" component={UnitsScreen} />
-      </Stack.Navigator>
-      <StatusBar style="auto" />
+          <Stack.Screen name="Register">
+            {(props) => (
+              <RegisterScreen
+                {...props}
+                onAuthSuccess={handleAuthSuccess}
+                onGoLogin={() => props.navigation.replace("Login")}
+              />
+            )}
+          </Stack.Screen>
+        </Stack.Navigator>
+      )}
+      <StatusBar style={token ? "dark" : "light"} />
     </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  loadingScreen: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: palette.background,
+  },
+});

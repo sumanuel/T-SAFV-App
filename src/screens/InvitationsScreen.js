@@ -1,51 +1,130 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-} from "react-native";
+  AppScreen,
+  DetailHeader,
+  EmptyState,
+  InfoPill,
+  SectionHeader,
+  SurfaceCard,
+} from "../components/AppChrome";
+import { useAppSession } from "../context/AppSessionContext";
 import sdk from "../lib/tsafv-sdk";
+import { getStateMeta, palette, spacing } from "../theme/appTheme";
 
-export default function InvitationsScreen({ route }) {
-  const token = route.params?.token;
-  const [items, setItems] = useState(null);
+export default function InvitationsScreen({ navigation }) {
+  const { invitations, refreshSession, loading } = useAppSession();
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const res = await sdk.getMyInvitations(token);
-      if (!mounted) return;
-      if (res.status === 200) setItems(res.data || []);
-      else setItems([]);
-    })();
-    return () => (mounted = false);
-  }, [token]);
-
-  if (items === null) return <ActivityIndicator style={{ flex: 1 }} />;
+  useFocusEffect(
+    useCallback(() => {
+      refreshSession();
+    }, [refreshSession]),
+  );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Invitaciones</Text>
-      <FlatList
-        data={items}
-        keyExtractor={(i) => String(i.id || i.token || Math.random())}
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <Text style={styles.large}>{item.email || item.target_email}</Text>
-            <Text>{item.estado || item.status || ""}</Text>
-          </View>
-        )}
-        ListEmptyComponent={<Text>No hay invitaciones</Text>}
+    <AppScreen scroll contentContainerStyle={styles.content}>
+      <DetailHeader
+        title="Invitaciones"
+        subtitle="Bandeja de invitaciones pendientes y accesos por rol."
+        onBack={() => navigation.goBack()}
+        rightActionLabel="Aceptar token"
+        onRightActionPress={() => navigation.navigate("AcceptInvite")}
       />
-    </View>
+
+      <SectionHeader
+        title="Pendientes de aceptación"
+        subtitle="Úsalas para incorporarte a una asociación sin salir de la app."
+      />
+
+      {loading && !invitations.length ? (
+        <SurfaceCard>
+          <Text style={styles.loadingText}>Actualizando invitaciones...</Text>
+        </SurfaceCard>
+      ) : null}
+
+      {!loading && !invitations.length ? (
+        <EmptyState
+          title="No hay invitaciones pendientes"
+          message="Cuando un administrador te invite a una asociación, podrás aceptarla desde este módulo."
+          actionLabel="Ingresar token"
+          onActionPress={() => navigation.navigate("AcceptInvite")}
+        />
+      ) : null}
+
+      <View style={styles.cardList}>
+        {invitations.map((item) => {
+          const state = getStateMeta(item.estado || item.status || "ACTIVO");
+          const inviteToken = item.token_invitacion || item.token || "";
+
+          return (
+            <SurfaceCard
+              key={String(item.id || inviteToken)}
+              style={styles.card}
+            >
+              <View style={styles.cardHeader}>
+                <View style={styles.cardCopy}>
+                  <Text style={styles.cardTitle}>
+                    {item.email_invitado || item.email || "Invitación"}
+                  </Text>
+                  <Text style={styles.cardSubtitle}>
+                    Rol: {item.rol_invitado || item.role || "Sin rol"}
+                  </Text>
+                </View>
+                <InfoPill {...state} />
+              </View>
+              <Text style={styles.tokenLabel}>Token</Text>
+              <Text style={styles.tokenValue}>
+                {inviteToken || "No disponible"}
+              </Text>
+            </SurfaceCard>
+          );
+        })}
+      </View>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 18, marginBottom: 12 },
-  row: { padding: 8, borderBottomWidth: 1, borderColor: "#eee" },
-  large: { fontWeight: "600" },
+  content: {
+    gap: spacing.lg,
+  },
+  loadingText: {
+    color: palette.inkSoft,
+    fontSize: 14,
+  },
+  cardList: {
+    gap: spacing.md,
+  },
+  card: {
+    gap: spacing.md,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  cardCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  cardTitle: {
+    color: palette.ink,
+    fontSize: 17,
+    fontWeight: "800",
+  },
+  cardSubtitle: {
+    color: palette.inkSoft,
+    fontSize: 13,
+  },
+  tokenLabel: {
+    color: palette.inkMuted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  tokenValue: {
+    color: palette.ink,
+    fontSize: 13,
+    lineHeight: 20,
+  },
 });

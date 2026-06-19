@@ -153,7 +153,9 @@ export default function DirectoryScreen({ navigation, route }) {
                   {association.rol === "ADMIN" ? (
                     <Text
                       onPress={() =>
-                        navigation.navigate("CreateAssociation", { association })
+                        navigation.navigate("CreateAssociation", {
+                          association,
+                        })
                       }
                       style={styles.inlineActionSecondary}
                     >
@@ -188,7 +190,9 @@ export default function DirectoryScreen({ navigation, route }) {
                 onPress={() => setMemberStateFilter(item.key)}
                 style={[
                   styles.filterChip,
-                  memberStateFilter === item.key ? styles.filterChipActive : null,
+                  memberStateFilter === item.key
+                    ? styles.filterChipActive
+                    : null,
                 ]}
               >
                 <Text
@@ -243,19 +247,25 @@ export default function DirectoryScreen({ navigation, route }) {
                   {canManage ? (
                     <View style={styles.memberActionsRow}>
                       <Text
-                        onPress={() => handleChangeMemberState(member, "ACTIVO")}
+                        onPress={() =>
+                          handleChangeMemberState(member, "ACTIVO")
+                        }
                         style={styles.inlineAction}
                       >
                         Activar
                       </Text>
                       <Text
-                        onPress={() => handleChangeMemberState(member, "SUSPENDIDO")}
+                        onPress={() =>
+                          handleChangeMemberState(member, "SUSPENDIDO")
+                        }
                         style={styles.inlineActionSecondary}
                       >
                         Suspender
                       </Text>
                       <Text
-                        onPress={() => handleChangeMemberState(member, "INACTIVO")}
+                        onPress={() =>
+                          handleChangeMemberState(member, "INACTIVO")
+                        }
                         style={styles.inlineDangerAction}
                       >
                         Inactivar

@@ -129,10 +129,14 @@ export default function UnitsScreen({ navigation }) {
                 <View style={styles.metaBlock}>
                   <Text style={styles.metaLabel}>Propietario</Text>
                   <Text style={styles.metaValue}>
-                    {item.propietario_nombre || item.propietario_id || "Sin asignar"}
+                    {item.propietario_nombre ||
+                      item.propietario_id ||
+                      "Sin asignar"}
                   </Text>
                   {item.propietario_email ? (
-                    <Text style={styles.metaHelper}>{item.propietario_email}</Text>
+                    <Text style={styles.metaHelper}>
+                      {item.propietario_email}
+                    </Text>
                   ) : null}
                 </View>
                 <View style={styles.metaBlock}>

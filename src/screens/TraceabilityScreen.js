@@ -122,7 +122,14 @@ export default function TraceabilityScreen({ navigation }) {
   const exportTraceability = async () => {
     if (!filteredItems.length) return;
 
-    const header = ["Fecha", "Unidad", "Fiscal", "Chofer", "Destino", "Pasajeros"];
+    const header = [
+      "Fecha",
+      "Unidad",
+      "Fiscal",
+      "Chofer",
+      "Destino",
+      "Pasajeros",
+    ];
     const rows = filteredItems.map((item) => {
       const unit = unitMap[String(item.unidad_id)];
       const fiscal = memberMap[String(item.fiscal_id)];

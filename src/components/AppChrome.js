@@ -104,7 +104,7 @@ export function DetailHeader({
   return (
     <View style={styles.detailHeader}>
       <Pressable onPress={onBack} style={styles.backButton}>
-        <Ionicons name="chevron-back" size={20} color={palette.ink} />
+        <Ionicons name="chevron-back" size={20} color={palette.surface} />
       </Pressable>
       <View style={styles.detailHeaderCopy}>
         <Text style={styles.detailHeaderTitle}>{title}</Text>
@@ -198,10 +198,19 @@ export function EmptyState({ title, message, actionLabel, onActionPress }) {
   );
 }
 
+export function FloatingActionButton({ icon = "add", label, onPress, style }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.fab, style]}>
+      <Ionicons name={icon} size={22} color={palette.surface} />
+      {label ? <Text style={styles.fabLabel}>{label}</Text> : null}
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   screenShell: {
     flex: 1,
-    backgroundColor: palette.background,
+    backgroundColor: palette.ink,
     overflow: "hidden",
   },
   backgroundOrbTop: {
@@ -211,7 +220,7 @@ const styles = StyleSheet.create({
     width: 250,
     height: 250,
     borderRadius: 125,
-    backgroundColor: "rgba(46, 147, 250, 0.12)",
+    backgroundColor: "rgba(46, 147, 250, 0.22)",
   },
   backgroundOrbBottom: {
     position: "absolute",
@@ -220,7 +229,7 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: "rgba(22, 105, 209, 0.09)",
+    backgroundColor: "rgba(46, 147, 250, 0.16)",
   },
   screen: {
     paddingHorizontal: spacing.lg,
@@ -272,12 +281,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   sectionTitle: {
-    color: palette.ink,
+    color: palette.surface,
     fontSize: 20,
     fontWeight: "800",
   },
   sectionSubtitle: {
-    color: palette.inkSoft,
+    color: palette.heroTextSoft,
     fontSize: 13,
     lineHeight: 19,
   },
@@ -286,7 +295,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   sectionActionLabel: {
-    color: palette.primaryDeep,
+    color: palette.surface,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -307,9 +316,9 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: palette.surface,
+    backgroundColor: "rgba(255,255,255,0.08)",
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -318,22 +327,22 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   detailHeaderTitle: {
-    color: palette.ink,
+    color: palette.surface,
     fontSize: 22,
     fontWeight: "800",
   },
   detailHeaderSubtitle: {
-    color: palette.inkSoft,
+    color: palette.heroTextSoft,
     fontSize: 13,
   },
   headerActionButton: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.pill,
-    backgroundColor: palette.primarySoft,
+    backgroundColor: "rgba(255,255,255,0.12)",
   },
   headerActionText: {
-    color: palette.primaryDeep,
+    color: palette.surface,
     fontSize: 12,
     fontWeight: "800",
   },
@@ -460,6 +469,24 @@ const styles = StyleSheet.create({
   },
   emptyButtonText: {
     color: palette.surface,
+    fontWeight: "800",
+  },
+  fab: {
+    position: "absolute",
+    right: spacing.lg,
+    bottom: spacing.xxl,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    backgroundColor: palette.primaryDeep,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    ...shadow,
+  },
+  fabLabel: {
+    color: palette.surface,
+    fontSize: 14,
     fontWeight: "800",
   },
 });

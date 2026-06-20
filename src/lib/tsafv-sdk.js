@@ -25,6 +25,10 @@ export async function getMyInvitations(token) {
   return apiGet("/api/invitaciones/mine", token);
 }
 
+export async function getAssociationInvitations(token, asociacionId) {
+  return apiGet(`/api/invitaciones/asociaciones/${asociacionId}`, token);
+}
+
 export async function getMyAssociations(token) {
   return apiGet("/api/asociaciones/mine", token);
 }
@@ -107,6 +111,7 @@ export default {
   register,
   login,
   getMyInvitations,
+  getAssociationInvitations,
   getMyAssociations,
   acceptInvitation,
   createInvitacion,

@@ -71,9 +71,13 @@ export default function HomeScreen({ navigation, onOpenFichaMenu }) {
     },
   ];
 
+  const heroBackground = {
+    backgroundColor: palette.ink,
+  };
+
   return (
     <AppScreen scroll contentContainerStyle={styles.content}>
-      <View style={styles.heroShell}>
+      <View style={[styles.heroShell, heroBackground]}>
         <View style={styles.heroGlow} />
         <View style={styles.heroTopRow}>
           <View style={styles.heroCopy}>
@@ -320,8 +324,8 @@ export default function HomeScreen({ navigation, onOpenFichaMenu }) {
         subtitle="Tareas frecuentes organizadas para operación diaria similar al tablero comercial de tienda-app."
       />
       <View style={styles.actionList}>
-        {actions.map((item) => (
-          <ActionRow key={item.key} {...item} />
+        {actions.map(({ key, ...item }) => (
+          <ActionRow key={key} {...item} />
         ))}
       </View>
     </AppScreen>
@@ -334,7 +338,6 @@ const styles = StyleSheet.create({
     paddingBottom: 132,
   },
   heroShell: {
-    backgroundColor: palette.heroTop,
     borderRadius: 34,
     padding: spacing.xl,
     gap: spacing.lg,
@@ -400,7 +403,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   badgeText: {
-    color: palette.heroTop,
+    color: palette.ink,
     fontSize: 11,
     fontWeight: "900",
   },

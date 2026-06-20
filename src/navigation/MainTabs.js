@@ -23,13 +23,10 @@ export default function MainTabs({ navigation }) {
     () => [
       {
         key: "consultar",
-        title: "Consulta",
         options: [
           {
             key: "asociaciones",
             label: "Asociaciones",
-            description:
-              "Vista maestra de afiliaciones, selección y resumen operativo.",
             icon: "business-outline",
             onPress: () =>
               navigation.navigate("Directory", { mode: "asociaciones" }),
@@ -37,8 +34,6 @@ export default function MainTabs({ navigation }) {
           {
             key: "propietarios",
             label: "Propietarios",
-            description:
-              "Consulta los miembros con rol propietario de la asociación activa.",
             icon: "people-outline",
             onPress: () =>
               navigation.navigate("Directory", { mode: "propietarios" }),
@@ -47,52 +42,17 @@ export default function MainTabs({ navigation }) {
           {
             key: "fiscales",
             label: "Fiscales",
-            description:
-              "Revisa el equipo fiscal y su cobertura sobre las unidades.",
             icon: "shield-checkmark-outline",
             onPress: () =>
               navigation.navigate("Directory", { mode: "fiscales" }),
             disabled: !activeAssociation,
           },
-        ],
-      },
-      {
-        key: "crear",
-        title: "Registrar",
-        options: [
           {
-            key: "crear-asociacion",
-            label: "Nueva asociación",
-            description:
-              "Crea una asociación operativa con sus datos fiscales y de contacto.",
-            icon: "add-circle-outline",
-            onPress: () => navigation.navigate("CreateAssociation"),
-          },
-          {
-            key: "crear-invitacion",
+            key: "invitar-miembro",
             label: "Invitar miembro",
-            description:
-              "Genera una invitación para administrador, fiscal o propietario.",
             icon: "mail-unread-outline",
-            onPress: () => navigation.navigate("CreateInvitation"),
+            onPress: () => navigation.navigate("AssociationInvitations"),
             disabled: !activeAssociation || activeAssociation?.rol !== "ADMIN",
-            badge:
-              !activeAssociation || activeAssociation?.rol === "ADMIN"
-                ? null
-                : "Sólo admin",
-          },
-          {
-            key: "crear-registro",
-            label: "Registro fiscal",
-            description:
-              "Carga una fiscalización real para una unidad de la asociación activa.",
-            icon: "create-outline",
-            onPress: () => navigation.navigate("CreateFiscalRecord"),
-            disabled: !activeAssociation || activeAssociation?.rol !== "FISCAL",
-            badge:
-              !activeAssociation || activeAssociation?.rol === "FISCAL"
-                ? null
-                : "Sólo fiscal",
           },
         ],
       },
@@ -168,12 +128,7 @@ export default function MainTabs({ navigation }) {
       <QuickActionMenu
         visible={showFichaMenu}
         onClose={() => setShowFichaMenu(false)}
-        title="Ficha operativa"
-        subtitle={
-          activeAssociation
-            ? `Asociación activa: ${activeAssociation.nombre}`
-            : "Selecciona una asociación para navegar los registros claves."
-        }
+        title="Ficha"
         sections={menuSections}
       />
     </>

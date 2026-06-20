@@ -20,10 +20,11 @@ import { getRoleMeta, palette, radii, spacing } from "../theme/appTheme";
 
 const roles = ["ADMIN", "FISCAL", "PROPIETARIO"];
 
-export default function CreateInvitationScreen({ navigation }) {
+export default function CreateInvitationScreen({ navigation, route }) {
   const { token, activeAssociation, refreshSession } = useAppSession();
+  const defaultRole = route.params?.defaultRole;
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("FISCAL");
+  const [role, setRole] = useState(defaultRole || "FISCAL");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {

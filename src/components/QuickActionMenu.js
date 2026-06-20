@@ -60,9 +60,11 @@ export default function QuickActionMenu({
                     </View>
                     <View style={styles.optionCopy}>
                       <Text style={styles.optionLabel}>{option.label}</Text>
-                      <Text style={styles.optionDescription}>
-                        {option.description}
-                      </Text>
+                      {option.description ? (
+                        <Text style={styles.optionDescription}>
+                          {option.description}
+                        </Text>
+                      ) : null}
                     </View>
                     {option.badge ? (
                       <View style={styles.optionBadge}>

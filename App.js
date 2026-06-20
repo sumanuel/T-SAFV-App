@@ -15,10 +15,14 @@ import DirectoryScreen from "./src/screens/DirectoryScreen";
 import CreateAssociationScreen from "./src/screens/CreateAssociationScreen";
 import CreateInvitationScreen from "./src/screens/CreateInvitationScreen";
 import FiscalRecordFormScreen from "./src/screens/FiscalRecordFormScreen";
+import AssociationInvitationsScreen from "./src/screens/AssociationInvitationsScreen";
+import OnboardingScreen from "./src/screens/OnboardingScreen";
 import MainTabs from "./src/navigation/MainTabs";
 import {
+  getHasSeenOnboarding,
   getToken as getStoredToken,
   deleteToken as removeStoredToken,
+  setHasSeenOnboarding,
 } from "./src/lib/authStore";
 import { startTokenMonitor, stopTokenMonitor } from "./src/lib/authManager";
 import { AppSessionProvider } from "./src/context/AppSessionContext";
@@ -31,13 +35,18 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [token, setToken] = useState(null);
+  const [hasSeenOnboarding, setHasSeenOnboardingState] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const t = await getStoredToken();
+      const [t, onboardingSeen] = await Promise.all([
+        getStoredToken(),
+        getHasSeenOnboarding(),
+      ]);
       if (t) {
         setToken(t);
       }
+      setHasSeenOnboardingState(onboardingSeen);
       setIsBootstrapping(false);
     })();
 
@@ -59,6 +68,11 @@ export default function App() {
   const handleSignOut = async () => {
     await removeStoredToken();
     setToken(null);
+  };
+
+  const handleCompleteOnboarding = async () => {
+    await setHasSeenOnboarding();
+    setHasSeenOnboardingState(true);
   };
 
   if (isBootstrapping) {
@@ -95,14 +109,23 @@ export default function App() {
               name="CreateFiscalRecord"
               component={FiscalRecordFormScreen}
             />
+            <Stack.Screen
+              name="AssociationInvitations"
+              component={AssociationInvitationsScreen}
+            />
           </Stack.Navigator>
         </AppSessionProvider>
       ) : (
         <Stack.Navigator
           key="auth-stack"
-          initialRouteName="Login"
+          initialRouteName={hasSeenOnboarding ? "Login" : "Onboarding"}
           screenOptions={{ headerShown: false, animation: "fade" }}
         >
+          {!hasSeenOnboarding ? (
+            <Stack.Screen name="Onboarding">
+              {() => <OnboardingScreen onDone={handleCompleteOnboarding} />}
+            </Stack.Screen>
+          ) : null}
           <Stack.Screen name="Login">
             {(props) => (
               <LoginScreen

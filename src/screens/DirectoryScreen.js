@@ -5,6 +5,7 @@ import {
   AppScreen,
   DetailHeader,
   EmptyState,
+  FloatingActionButton,
   InfoPill,
   SectionHeader,
   SurfaceCard,
@@ -278,6 +279,20 @@ export default function DirectoryScreen({ navigation, route }) {
           </View>
         </>
       )}
+
+      <FloatingActionButton
+        label="Nuevo"
+        onPress={() => {
+          if (mode === "asociaciones") {
+            navigation.navigate("CreateAssociation");
+            return;
+          }
+
+          navigation.navigate("CreateInvitation", {
+            defaultRole: config.role,
+          });
+        }}
+      />
     </AppScreen>
   );
 }
